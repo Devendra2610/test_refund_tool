@@ -84,12 +84,38 @@ AIyu/
 
 ## 🚀 Running the Project Locally
 
-### 1. Prerequisites
-Ensure you have **Python 3.10+** and **Node.js 18+** installed.
+There are two ways to run this project on any desktop: **One-Click Scripts (Native)** and **Docker Containerization**.
+
+### 🐳 Option A: Using Docker (Recommended for Portability)
+If you have **Docker** and **Docker Compose** installed, you can launch the complete stack with a single command from the root directory:
+```bash
+docker compose up --build
+```
+* **Frontend:** `http://localhost:5173`
+* **Backend API & Swagger Docs:** `http://localhost:8000/docs`
 
 ---
 
-### 2. Backend Setup & Run
+### 🖱️ Option B: One-Click Startup Scripts (Native)
+We provide easy launcher scripts at the root level which check for Docker, and if not running, automatically start both servers natively:
+
+*   **Windows:** Double-click `run.bat` or run:
+    ```cmd
+    run.bat
+    ```
+*   **macOS / Linux:** Run:
+    ```bash
+    chmod +x run.sh
+    ./run.sh
+    ```
+
+---
+
+### 💻 Option C: Manual Native Setup (Step-by-Step)
+
+Ensure you have **Python 3.10+** and **Node.js 18+** installed locally.
+
+#### 1. Backend Setup & Run
 
 Navigate to the `backend` folder:
 ```bash

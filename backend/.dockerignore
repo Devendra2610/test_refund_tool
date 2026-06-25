@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.gitignore
+data/database.db
+data/uploads/*
+!data/uploads/.gitkeep
+data/output/*
+!data/output/.gitkeep
