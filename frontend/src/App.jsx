@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://fancy-pots-search.loca.lt';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');

@@ -8,9 +8,9 @@ APP_JSX_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "frontend
 
 def get_tunnel_url(port):
     print(f"[INFO] Starting localtunnel on port {port}...")
-    # Use shell=True for windows to load npx
+    # Use shell=True to load npx reliably on all OS
     proc = subprocess.Popen(
-        f"cmd /c npx localtunnel --port {port}",
+        f"npx localtunnel --port {port}",
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -60,21 +60,51 @@ def main():
         with open(APP_JSX_PATH, "r", encoding="utf-8") as f:
             original_jsx_content = f.read()
             
-    backend_proc = None
-    frontend_proc = None
+    backend_server = None
+    frontend_server = None
+    backend_tunnel = None
+    frontend_tunnel = None
     
     try:
-        # 1. Start backend tunnel
-        backend_proc, backend_url = get_tunnel_url(8000)
+        # 1. Start Backend Server
+        print("[INFO] Starting Backend Server (Uvicorn)...")
+        # Find correct python interpreter in venv
+        venv_python = os.path.join("backend", "venv", "Scripts", "python.exe") if os.name == "nt" else os.path.join("backend", "venv", "bin", "python")
+        if not os.path.exists(venv_python):
+            venv_python = os.path.join("backend", ".venv", "Scripts", "python.exe") if os.name == "nt" else os.path.join("backend", ".venv", "bin", "python")
+        if not os.path.exists(venv_python):
+            venv_python = "python" # fallback
+            
+        backend_server = subprocess.Popen(
+            [venv_python, "-m", "uvicorn", "app.main:app", "--port", "8000"],
+            cwd="backend",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(2) # wait for backend to initialize
+        
+        # 2. Start Frontend Server
+        print("[INFO] Starting Frontend Server (Vite)...")
+        npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+        frontend_server = subprocess.Popen(
+            [npm_cmd, "run", "dev"],
+            cwd="frontend",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(2) # wait for frontend to initialize
+
+        # 3. Start backend tunnel
+        backend_tunnel, backend_url = get_tunnel_url(8000)
         print(f"[SUCCESS] Backend API tunnel created: {backend_url}")
         print()
         
-        # 2. Update frontend config
+        # 4. Update frontend config
         update_app_jsx(backend_url)
         print()
         
-        # 3. Start frontend tunnel
-        frontend_proc, frontend_url = get_tunnel_url(5173)
+        # 5. Start frontend tunnel
+        frontend_tunnel, frontend_url = get_tunnel_url(5173)
         print()
         print("=========================================================")
         print("   SHAREABLE LINK GENERATED SUCCESSFULLY!   ")
@@ -82,23 +112,26 @@ def main():
         print(f"   Share this link with anyone to access your dashboard:")
         print(f"   {frontend_url}")
         print("=========================================================")
-        print("Note: Keep this script running. When someone visits the link,")
-        print("localtunnel may ask them to enter the host's public IP address.")
+        print("Note: Keep this window open. When someone visits the link,")
+        print("localtunnel may ask them to enter your public IP address.")
         print("You can find your public IP address by searching 'my ip' on Google.")
         print("=========================================================")
-        print("Press Ctrl+C to stop sharing and restore local settings.")
+        print("Press Ctrl+C in this terminal to stop the servers and sharing.")
         
         # Keep running
         while True:
             time.sleep(1)
             
     except KeyboardInterrupt:
-        print("\n[INFO] Shutting down tunnels...")
+        print("\n[INFO] Shutting down servers and tunnels...")
     finally:
-        if backend_proc:
-            backend_proc.terminate()
-        if frontend_proc:
-            frontend_proc.terminate()
+        # Clean up all spawned processes
+        for proc in [backend_server, frontend_server, backend_tunnel, frontend_tunnel]:
+            if proc:
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
             
         if original_jsx_content:
             print("[INFO] Restoring original App.jsx configuration...")
